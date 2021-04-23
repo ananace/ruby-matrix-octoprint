@@ -74,13 +74,13 @@ module MatrixOctoprint
     end
 
     def run_timer(interval, &block)
-      EventMachine::Timer.new(interval) { timer_elapsed(interval, block) }
+      EventMachine::Timer.new(interval) { timer_elapsed(interval, &block) }
     end
 
     def timer_elapsed(interval, &block)
       return unless block.call
 
-      run_timer(interval, block)
+      run_timer(interval, &block)
     end
 
     def post_job_update
