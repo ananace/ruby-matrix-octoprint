@@ -1,0 +1,146 @@
+#!/bin/env ruby
+# frozen_string_literal: true
+
+require 'logging'
+require 'matrix_octoprint'
+require 'optparse'
+require 'ostruct'
+require 'uri'
+
+opts = OpenStruct.new
+opts.log_level = :info
+
+optparse = OptionParser.new do |parser|
+  parser.banner = "Usage: #{$PROGRAM_NAME} [options]"
+
+  parser.separator ''
+  parser.separator 'Octoprint access options:'
+  parser.on '--octoprint URL', 'The URL to the Octoprint server' do |octoprint|
+    opts.octoprint_uri = URI(octoprint)
+  end
+
+  parser.on '--octoprint-user USER',
+            'The Octoprint user to log in as.',
+            'Can also be set as the environment variable OCTOPRINT_USER' do |user|
+    opts.octoprint_user = user
+  end
+
+  parser.on '--octoprint-password PASSWORD',
+            'The password for the Octoprint user.',
+            'Can also be set as the environment variable OCTOPRINT_PASSWORD' do |password|
+    opts.octoprint_password = password
+  end
+
+  parser.on '--octoprint-apikey APIKEY',
+            'The API Key to use to talk to Octoprint.',
+            'Can also be set as the environment variable OCTOPRINT_APIKEY' do |apikey|
+    opts.octoprint_apikey = apikey
+  end
+
+  parser.separator 'Matrix access options:'
+  parser.on '--matrix URL', 'The URL to the Matrix server' do |matrix|
+    opts.matrix_uri = URI(matrix)
+  end
+
+  parser.on '--matrix-user USER',
+            'The Matrix user to log in as.',
+            'Can also be set as the environment variable MATRIX_USER' do |user|
+    opts.matrix_user = user
+  end
+  parser.on '--matrix-password PASSWORD',
+            'The password for the Matrix user to log in as.',
+            'Can also be set as the environment variable MATRIX_PASSWORD' do |password|
+    opts.matrix_password = password
+  end
+  parser.on '--matrix-token TOKEN',
+            'The access token to use for accessing Matrix.',
+            'Can also be set as the environment variable MATRIX_TOKEN' do |token|
+    opts.matrix_token = token
+  end
+
+  parser.separator ''
+  parser.on '--matrix-room ROOM',
+            'The room to send events to.',
+            'Can be specified multiple times to send to multiple rooms, or skipped to send to all joined rooms.' do |room| # rubocop:disable Layout/LineLength
+    opts.matrix_rooms ||= []
+    opts.matrix_rooms << room
+  end
+
+  parser.separator ''
+  parser.separator 'Misc:'
+  parser.on '-h', '--help', 'Print this text' do
+    puts parser
+    exit
+  end
+
+  parser.on '-v', '--verbose', 'Enable verbose output, specify twice for protocol debugging' do
+    opts.debug = true if opts.log_level == :debug
+    opts.log_level = :debug
+  end
+
+  parser.on '-q', '--quiet', 'Disable informative output, will only print warnings/errors' do
+    opts.log_level = :warn
+  end
+end
+optparse.parse!
+
+unless opts.octoprint_uri
+  puts 'Must specify Octoprint URI'
+  puts
+  puts parser
+  exit 1
+end
+
+opts.octoprint_user ||= ENV['OCTOPRINT_USER']
+opts.octoprint_password ||= ENV['OCTOPRINT_PASSWORD']
+unless opts.octoprint_user && opts.octoprint_password
+  puts 'Must specify both user and password for Octoprint'
+  puts
+  puts parser
+  exit 1
+end
+
+unless opts.matrix_uri
+  puts 'Must specify a Matrix server URI'
+  puts
+  puts parser
+  exit 1
+end
+
+opts.matrix_user ||= ENV['MATRIX_USER']
+opts.matrix_password ||= ENV['MATRIX_PASSWORD']
+opts.matrix_token ||= ENV['MATRIX_TOKEN']
+if (!opts.matrix_user || !opts.matrix_password) && !opts.matrix_token
+  puts 'Must specify either a Matrix user and password, or an access token'
+  puts
+  puts parser
+  exit 1
+end
+
+MatrixSdk.debug! if opts.debug
+Logging.logger.root.level = opts.log_level
+Logging.logger.root.appenders = Logging.appenders.stdout
+
+MatrixOctoprint.matrix.connect opts.matrix_uri,
+                               user: opts.matrix_user,
+                               password: opts.matrix_password,
+                               token: opts.matrix_token,
+                               rooms: opts.matrix_rooms
+MatrixOctoprint.octoprint.connect opts.octoprint_uri,
+                                  user: opts.octoprint_user,
+                                  password: opts.octoprint_password,
+                                  apikey: opts.octoprint_apikey
+
+Signal.trap 'INT' do
+  Logging.logger[MatrixOctoprint].info 'Interrupt received'
+
+  MatrixOctoprint.octoprint.disconnect
+  MatrixOctoprint.matrix.disconnect
+end
+
+Logging.logger[MatrixOctoprint].info 'Started matrix-octoprint client'
+[
+  MatrixOctoprint.octoprint.thread
+  # MatrixOctoprint.matrix.thread
+].each(&:join)
+Logging.logger[MatrixOctoprint].info 'Stopped matrix-octoprint client'
