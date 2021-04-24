@@ -1,11 +1,11 @@
 <%- if event.user || event.owner -%>
-<%-   if job.key? 'filament' -%>
+<%-   if job.key?('filament') && job.filament -%>
 <%= event.user || event.owner %> started printing <%= event.name %> (<%= job.filament.first.last.length.as_length %> / <%= (job.filament.first.last.volume * 1.24).round(2) %>g PLA / <%= job.file.size.as_size %>)
 <%-   else -%>
 <%= event.user || event.owner %> started printing <%= event.name %>
 <%-   end -%>
 <%- else -%>
-<%-   if job.key? 'filament' -%>
+<%-   if job.key?('filament') && job.filament -%>
 Started printing <%= event.name %> (<%= job.filament.first.last.length.as_length %> / <%= (job.filament.first.last.volume * 1.24).round(2) %>g PLA / <%= job.file.size.as_size %>)
 <%-   else -%>
 Started printing <%= event.name %>
