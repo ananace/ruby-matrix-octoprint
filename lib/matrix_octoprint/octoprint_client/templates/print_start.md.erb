@@ -1,15 +1,14 @@
+<%-
+if job.key?('filament') && job.filament
+  print_info = "(%s / %.2fg PLA / %s)" % [job.filament.first.last.length.as_length, job.filament.first.last.volume * 1.24, job.file.size.as_size]
+else
+  print_info = "(%s)" % job.file.size.as_size
+end
+-%>
 <%- if event.user || event.owner -%>
-<%-   if job.key?('filament') && job.filament -%>
-<%= event.user || event.owner %> started printing <%= event.name %> (<%= job.filament.first.last.length.as_length %> / <%= (job.filament.first.last.volume * 1.24).round(2) %>g PLA / <%= job.file.size.as_size %>)
-<%-   else -%>
-<%= event.user || event.owner %> started printing <%= event.name %>
-<%-   end -%>
+<%= event.user || event.owner %> started printing <%= event.name %> <%= print_info %>
 <%- else -%>
-<%-   if job.key?('filament') && job.filament -%>
-Started printing <%= event.name %> (<%= job.filament.first.last.length.as_length %> / <%= (job.filament.first.last.volume * 1.24).round(2) %>g PLA / <%= job.file.size.as_size %>)
-<%-   else -%>
-Started printing <%= event.name %>
-<%-   end -%>
+Started printing <%= event.name %> <%= print_info %>
 <%- end -%>
 <%- if job.key? 'estimatedPrintTime' %>
 ETA: <%= job.estimatedPrintTime.as_duration %>
