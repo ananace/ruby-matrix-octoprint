@@ -177,8 +177,7 @@ module MatrixOctoprint
       logger.debug "WS< #{data.inspect}"
 
       # WTF SockJS?!
-      data = [data.to_json]
-      data = data.to_json
+      data = [data.to_json].to_json
       ws.send data
     end
 
