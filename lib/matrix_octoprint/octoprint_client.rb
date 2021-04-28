@@ -70,7 +70,12 @@ module MatrixOctoprint
 
       ws.on :close do |event|
         logger.info "Lost websocket connection to Octoprint: #{event.inspect}"
+
+        logger.info "Reconnecting in 10 seconds..."
+        run_timer(10) { connect_ws }
       end
+
+      nil
     end
 
     def run_timer(interval, &block)
@@ -87,6 +92,7 @@ module MatrixOctoprint
       job = api_request(:GET, :job) rescue { 'job' => {} }
       job = DeepOpenStruct.new(job['job'])
 
+      # Stop the timer
       return false if %w[Operational Error Offline].include? job.state
 
       MatrixOctoprint.matrix.send(
@@ -97,7 +103,7 @@ module MatrixOctoprint
         data: job
       )
 
-      true # Continue to loop
+      true # Keep the timer running
     end
 
     def handle_message(type, data)
