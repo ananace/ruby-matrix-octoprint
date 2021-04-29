@@ -100,7 +100,7 @@ module MatrixOctoprint
         html: Templates.render(:print_update, :html).result(binding),
         bare: Templates.render(:print_update, :md).result(binding),
 
-        data: job
+        data: job.to_h
       )
 
       true # Keep the timer running
@@ -161,7 +161,9 @@ module MatrixOctoprint
       event = DeepOpenStruct.new(event)
       MatrixOctoprint.matrix.send(
         # html: Templates.render(:print_done, :html).result(binding),
-        bare: Templates.render(:print_done, :md).result(binding)
+        bare: Templates.render(:print_done, :md).result(binding),
+
+        data: event.to_h
       )
     end
 
