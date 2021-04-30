@@ -45,11 +45,32 @@ module MatrixOctoprint
         'org.octoprint.data': data
       }.compact
 
-      rooms.each do |r|
+      resp = rooms.map do |r|
         next if room && r != room && r.id != room
 
-        client.api.send_message_event(r.id, 'm.room.message', msg_data)
-      end
+        [r, client.api.send_message_event(r.id, 'm.room.message', msg_data)]
+      end.compact.to_h
+    end
+
+    def edit(id:, bare:, html: nil, type: nil, room:, data: nil)
+      msg_data = {
+        body: bare,
+        msgtype: type || @type,
+        'm.new_content': {
+          body: bare,
+          format: html ? 'org.matrix.custom.html' : nil,
+          formatted_body: html,
+        },
+        'm.relates_to': {
+          rel_type: 'm.replace',
+          event_id: id
+        },
+
+        'org.octoprint.data': data
+      }.compact
+
+      room = rooms.find { |r| r == room || r.id == room }
+      client.api.send_message_event(room.id, 'm.room.message', msg_data)
     end
   end
 end

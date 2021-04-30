@@ -88,15 +88,20 @@ module MatrixOctoprint
       run_timer(interval, &block)
     end
 
-    def post_job_update
+    def post_job_update(msg, room)
+      logger.debug 'Checking for update on running job'
+
       job = api_request(:GET, :job) rescue { 'job' => {} }
       job = DeepOpenStruct.new(job['job'])
 
       # Stop the timer
       return false if %w[Operational Error Offline].include? job.state
 
-      MatrixOctoprint.matrix.send(
-        replace: 'job message',
+      logger.info 'Posting update on running job'
+
+      MatrixOctoprint.matrix.edit(
+        id: msg,
+        room: room,
         html: Templates.render(:print_update, :html).result(binding),
         bare: Templates.render(:print_update, :md).result(binding),
 
@@ -143,16 +148,20 @@ module MatrixOctoprint
       job = api_request(:GET, :job) rescue { 'job' => {} }
       job = DeepOpenStruct.new(job['job'])
 
-      logger.debug "PrintStarted\nevent: #{event.inspect}\njob: #{job.inspect}"
-
-      MatrixOctoprint.matrix.send(
+      resp = MatrixOctoprint.matrix.send(
         html: Templates.render(:print_start, :html).result(binding),
         bare: Templates.render(:print_start, :md).result(binding),
 
         data: job.to_h
       )
 
-      run_timer(30 * 60) { post_job_update }
+      run_timer(30 * 60) do
+        run = true
+        resp.each do |room, msg|
+          run &&= post_job_update(room, msg.event_id)
+        end
+        run
+      end
     end
 
     def _handle_event_PrintFailed(data); end

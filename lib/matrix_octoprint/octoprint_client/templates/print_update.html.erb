@@ -1,0 +1,15 @@
+<%-
+if job.key?('filament') && job.filament
+  print_info = "(%s / %.2fg PLA / %s)" % [job.filament.first.last.length.as_length, job.filament.first.last.volume * 1.24, job.file.size.as_size]
+else
+  print_info = "(%s)" % job.file.size.as_size
+end
+-%>
+Printing <%= job.file.name %> <%= print_info %>
+<%- end -%>
+<%- if job.key? 'estimatedPrintTime' -%>
+<%= job.progress.printTime.as_duration %> / <%= job.estimatedPrintTime.as_duration %> <%= (job.progress.completion * 100).floor %>%
+<%- else -%>
+<%= job.progress.printTime.as_duration %> <%= (job.progress.completion * 100).floor %>%
+<%- end -%>
+ETA: <%= job.progress.printTimeLeft.as_duration %>
