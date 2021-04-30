@@ -66,6 +66,11 @@ optparse = OptionParser.new do |parser|
     opts.matrix_rooms << room
   end
 
+  parser.on '--matrix-type TYPE',
+            'The type of message to send, defaults to "m.notify". Set to "m.text" for notifications.' do |type|
+    opts.matrix_type = type
+  end
+
   parser.separator ''
   parser.separator 'Misc:'
   parser.on '-h', '--help', 'Print this text' do
@@ -125,7 +130,8 @@ MatrixOctoprint.matrix.connect opts.matrix_uri,
                                user: opts.matrix_user,
                                password: opts.matrix_password,
                                token: opts.matrix_token,
-                               rooms: opts.matrix_rooms
+                               rooms: opts.matrix_rooms,
+                               type: opts.matrix_type || 'm.notify'
 MatrixOctoprint.octoprint.connect opts.octoprint_uri,
                                   user: opts.octoprint_user,
                                   password: opts.octoprint_password,

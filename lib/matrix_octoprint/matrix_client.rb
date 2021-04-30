@@ -6,7 +6,7 @@ module MatrixOctoprint
   class MatrixClient
     attr_reader :thread, :client, :rooms
 
-    def connect(uri, user: nil, password: nil, token: nil, rooms: nil)
+    def connect(uri, user: nil, password: nil, token: nil, rooms: nil, type: nil)
       @client = if token
                   MatrixSdk::Client.new uri, access_token: token
                 else
@@ -21,6 +21,7 @@ module MatrixOctoprint
         client.reload_rooms!
         @rooms = client.rooms
       end
+      @type = type
 
       # @thread = client.start_listen_thread
     end
@@ -34,12 +35,12 @@ module MatrixOctoprint
       @logger ||= Logging.logger[self]
     end
 
-    def send(bare:, html: nil, type: 'm.notify', room: nil, data: nil)
+    def send(bare:, html: nil, type: nil, room: nil, data: nil)
       msg_data = {
         body: bare,
         format: html ? 'org.matrix.custom.html' : nil,
         formatted_body: html,
-        msgtype: type,
+        msgtype: type || @type,
 
         'org.octoprint.data': data
       }.compact
