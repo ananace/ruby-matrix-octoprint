@@ -7,7 +7,7 @@ end
 -%>
 Printing <%= job.file.name %> <%= print_info %>
 <%- end -%>
-<%- if job.key? 'estimatedPrintTime' -%>
+<%- if job.estimatedPrintTime -%>
 <%= job.progress.printTime.as_duration %> / <%= job.estimatedPrintTime.as_duration %> <%= (job.progress.completion * 100).floor %>%
 <%- else -%>
 <%= job.progress.printTime.as_duration %> <%= (job.progress.completion * 100).floor %>%

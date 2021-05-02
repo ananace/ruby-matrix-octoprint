@@ -10,6 +10,6 @@ end
 <%- else -%>
 Started printing <%= event.name %> <%= print_info %>
 <%- end -%>
-<%- if job.key? 'estimatedPrintTime' %>
+<%- if job.estimatedPrintTime %>
 ETA: <%= job.estimatedPrintTime.as_duration %>
 <%- end -%>
