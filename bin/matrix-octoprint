@@ -138,10 +138,12 @@ MatrixOctoprint.octoprint.connect opts.octoprint_uri,
                                   apikey: opts.octoprint_apikey
 
 Signal.trap 'INT' do
-  Logging.logger[MatrixOctoprint].info 'Interrupt received'
+  puts 'Interrupt received'
 
   MatrixOctoprint.octoprint.disconnect
   MatrixOctoprint.matrix.disconnect
+
+  MatrixOctoprint.octoprint.thread.kill
 end
 
 Logging.logger[MatrixOctoprint].info 'Started matrix-octoprint client'
