@@ -112,8 +112,6 @@ module MatrixOctoprint
     end
 
     def handle_message(type, data)
-      logger.debug "Received #{type} message"
-
       method = "_handle_#{type}".to_sym
       send method, data if private_methods.include? method
     end
@@ -138,9 +136,11 @@ module MatrixOctoprint
     end
 
     def _handle_event(data)
-      logger.debug "Handling #{data['type']} event"
       method = "_handle_event_#{data['type']}".to_sym
-      send method, data['payload'] if private_methods.include? method
+      return unless private_methods.include? method
+
+      logger.debug "Handling #{data['type']} event"
+      send method, data['payload']
     end
 
     def _handle_event_PrintStarted(event)
